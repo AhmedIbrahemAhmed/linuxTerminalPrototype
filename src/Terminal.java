@@ -21,9 +21,9 @@ public class Terminal {
       try {
         if (!Files.exists(path)) {
           Files.createDirectory(path);
-          System.out.println("Directory created");
+          System.out.println("dir created");
         } else {
-          System.out.println("Directory already exists");
+          System.out.println("dir already exists");
         }
       } catch (InvalidPathException | IOException e) {
         System.out.println("Invalid path "+ path);
@@ -52,7 +52,7 @@ public class Terminal {
             .forEach(path -> {
               try {
                 Files.delete(path);
-                System.out.println("directory: "+ path + " deleted");
+                System.out.println("dir "+ path + " deleted");
               } catch (InvalidPathException | IOException e) {
                 System.out.println("Invalid path "+ path);
               }
@@ -76,13 +76,22 @@ public class Terminal {
     Path path = Paths.get(args[0]);
     try {
       Files.createFile(path);
-      System.out.println("your file: "+ path + " created successfully");
+      System.out.println(path + " created successfully");
     } catch (InvalidPathException | IOException e) {
       System.out.println("Invalid path "+ path);
     }
   }
   private void cp() {}
-  private void rm() {}
+  private void rm() {
+    String arg = parser.getArgs()[0];
+    Path path = Paths.get(arg);
+    try {
+      Files.delete(path);
+      System.out.println("file "+ path + " deleted");
+    } catch (InvalidPathException | IOException e) {
+      System.out.println("Invalid path "+ path);
+    }
+  }
   private void cat() {}
   private void history() {}
 
@@ -95,7 +104,8 @@ public class Terminal {
       System.out.print(">> ");
       String command = scanner.nextLine();
       parser.parse(command);
-      switch (parser.getCommandName()) {
+      String commandName = parser.getCommandName();
+      switch (commandName) {
         case "mkdir":
           mkdir();
           break;
@@ -105,8 +115,14 @@ public class Terminal {
         case "touch":
           touch();
           break;
+        case "rm":
+          rm();
+          break;
         case "exit":
           exit = true;
+          break;
+        default:
+          System.out.println("command " + command + " not found");
           break;
       }
     }

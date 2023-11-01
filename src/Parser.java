@@ -2,9 +2,9 @@ import java.util.ArrayList;
 import java.util.Objects;
 
 public class Parser {
-  String commandName;
-  String[] args;
-  String[] flags;
+  private String commandName;
+  private String[] args;
+  private String[] flags;
   public Parser() {
     this.commandName = "";
     this.args = new String[10];

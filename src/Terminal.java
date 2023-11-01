@@ -17,8 +17,8 @@ public class Terminal {
   private void mkdir() {
     String[] args = parser.getArgs();
     for(String arg : args) {
+      Path path = Paths.get(arg);
       try {
-        Path path = Paths.get(arg);
         if (!Files.exists(path)) {
           Files.createDirectory(path);
           System.out.println("Directory created");
@@ -26,7 +26,7 @@ public class Terminal {
           System.out.println("Directory already exists");
         }
       } catch (InvalidPathException | IOException e) {
-        throw new RuntimeException(e);
+        System.out.println("Invalid path "+ path);
       }
     }
   }
@@ -45,15 +45,16 @@ public class Terminal {
                 DirectoryStream<Path> dirStream = Files.newDirectoryStream(path);
                 return !dirStream.iterator().hasNext();
               } catch (IOException e) {
-                throw new RuntimeException(e);
+                System.out.println("dir "+ path +" is not empty");
               }
+              return false;
             })
             .forEach(path -> {
               try {
                 Files.delete(path);
                 System.out.println("directory: "+ path + " deleted");
               } catch (InvalidPathException | IOException e) {
-                throw new RuntimeException(e);
+                System.out.println("Invalid path "+ path);
               }
             });
       } else {
@@ -61,16 +62,25 @@ public class Terminal {
         DirectoryStream<Path> dirStream = Files.newDirectoryStream(currPath);
         if (Files.isDirectory(currPath) && !dirStream.iterator().hasNext()) {
           Files.delete(currPath);
-          System.out.println(currPath + "deleted");
+          System.out.println(currPath + " deleted");
         } else {
           System.out.println("error this is not a directory or directory is not empty");
         }
       }
     } catch (InvalidPathException | IOException e) {
-      throw new RuntimeException(e);
+      System.out.println("Invalid path "+ arg);
     }
   }
-  private void touch() {}
+  private void touch() {
+    String[] args = parser.getArgs();
+    Path path = Paths.get(args[0]);
+    try {
+      Files.createFile(path);
+      System.out.println("your file: "+ path + " created successfully");
+    } catch (InvalidPathException | IOException e) {
+      System.out.println("Invalid path "+ path);
+    }
+  }
   private void cp() {}
   private void rm() {}
   private void cat() {}
@@ -79,18 +89,26 @@ public class Terminal {
   // TODO cp -r, ls -r
   public void chooseCommandAction(){
     Scanner scanner = new Scanner(System.in);
-    System.out.println("your command: ");
-    String command = scanner.nextLine();
+    boolean exit = false;
 
-    parser.parse(command);
-
-    switch (parser.getCommandName()) {
-      case "mkdir":
-        mkdir();
-        break;
-      case "rmdir":
-        rmdir();
-        break;
+    while (!exit) {
+      System.out.print(">> ");
+      String command = scanner.nextLine();
+      parser.parse(command);
+      switch (parser.getCommandName()) {
+        case "mkdir":
+          mkdir();
+          break;
+        case "rmdir":
+          rmdir();
+          break;
+        case "touch":
+          touch();
+          break;
+        case "exit":
+          exit = true;
+          break;
+      }
     }
   }
   public static void main(String[] args){}

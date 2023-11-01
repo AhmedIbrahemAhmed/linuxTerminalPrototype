@@ -3,10 +3,13 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.util.Comparator;
 import java.util.Objects;
+import java.util.Scanner;
 
 public class Terminal {
   Parser parser;
-
+  Terminal() {
+    parser = new Parser();
+  }
   private void echo() {}
   private String pwd() {return "";}
   private void cd(String[] args) {}
@@ -75,7 +78,20 @@ public class Terminal {
 
   // TODO cp -r, ls -r
   public void chooseCommandAction(){
+    Scanner scanner = new Scanner(System.in);
+    System.out.println("your command: ");
+    String command = scanner.nextLine();
 
+    parser.parse(command);
+
+    switch (parser.getCommandName()) {
+      case "mkdir":
+        mkdir();
+        break;
+      case "rmdir":
+        rmdir();
+        break;
+    }
   }
   public static void main(String[] args){}
 }

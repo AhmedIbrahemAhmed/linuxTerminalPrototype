@@ -8,6 +8,8 @@ import java.util.Objects;
 import java.util.Scanner;
 import java.util.Vector;
 
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+
 public class Terminal {
   Parser parser;
   Vector<String>  History;
@@ -65,7 +67,20 @@ public class Terminal {
    }
   
   }
-  private void ls() {}
+  private void ls() {
+    File currentDirectory = new File(".") ;
+    File[] files = currentDirectory.listFiles() ;
+    if(parser.getFlags().length != 0){
+      for(int i= files.length-1 ;i>=0;i--)
+        System.out.println(files[i].getName());
+    }
+    else{
+      for(File file: files){
+        System.out.println(file.getName());
+      }
+    }
+
+  }
   private void mkdir() {
     String[] args = parser.getArgs();
     for(String arg : args) {
@@ -135,7 +150,120 @@ public class Terminal {
       System.out.println("Invalid path "+ path);
     }
   }
-  private void cp() {}
+  private void cp() throws IOException {
+    boolean has_flag = (parser.getFlags()[0]!= null) ;
+    int length = 0;
+    String[] arguments = parser.getArgs();
+    for(int i=0;i<arguments.length;i++){
+      if(arguments[i]!= null)
+        length++ ;
+    }
+    if(length > 2) {
+      System.out.println("error: too many arguments");
+      return ;
+    }
+    else if(length<2 ){
+      System.out.println("error: arguments are less than 2");
+      return ;
+    }
+    if(Objects.equals(arguments[0], arguments[1])){
+        System.out.println("error: source and destination are the same");
+        return;
+    }
+    File currentDirectory = new File(".") ;
+    File[] files = currentDirectory.listFiles() ;
+    Path source = null;
+    Path destination = null;
+
+    boolean isDirectory1 = false ;
+    boolean isDirectory2 = false    ;
+    boolean found1 = false ;
+    boolean found2 = false ;
+    for(int i=0;i<files.length;i++){
+      if(files[i].getName().equals(arguments[0])){
+        if(files[i].isDirectory())
+          isDirectory1 = true ;
+        found1 = true ;
+        source = files[i].toPath() ;
+      }
+      if(files[i].getName().equals(arguments[1])) {
+        if(files[i].isDirectory())
+          isDirectory2 = true ;
+        found2 = true;
+        destination = files[i].toPath() ;
+      }
+    }
+//    for(int i=0;i<files.length;i++){
+//      files[i] ;
+//    }
+    if(!found1){
+      System.out.println("error: couldn't find the first file");
+      return;
+    }
+    if(!found2){
+      if(isDirectory1 && has_flag){
+        new File(arguments[1]).mkdirs();
+        destination = Path.of(arguments[1]);
+        isDirectory2 = true ;
+
+      }
+      else if(isDirectory1 && !has_flag){
+        System.out.println("error: the first file can't be directory");
+        return ;
+      }
+      else if(!isDirectory1 && !has_flag){
+        File file = new File(arguments[1]);
+        destination = file.toPath();
+      }
+      else{
+        System.out.println("error the first argument must be directory");
+        return;
+      }
+
+    }
+    if(!has_flag) {
+      if (isDirectory1 || isDirectory2) {
+        System.out.println("error: the two arguments must be files");
+      }
+
+      else{
+        try {
+          Files.copy(source, destination, REPLACE_EXISTING);
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+    else{
+      if(!isDirectory1 || !isDirectory2){
+        System.out.println("error: the two arguments must be directories");
+      }
+      else{
+        try (DirectoryStream<Path> directory = Files.newDirectoryStream(destination)) {
+          if( directory.iterator().hasNext()){
+            System.out.println("error: destination is not empty");
+          }
+          else{
+//            copying the directories here
+            Path finalDestination = destination;
+            Path finalSource = source;
+            Files.walk(Paths.get(finalSource.toString()))
+                    .forEach(mysource -> {
+                      Path mydestination = Paths.get(finalDestination.toString(), mysource.toString()
+                              .substring(finalSource.toString().length()));
+                      try {
+                        Files.copy(mysource, mydestination, REPLACE_EXISTING);
+                      } catch (IOException e) {
+                        e.printStackTrace();
+                      }
+                    });
+          }
+        }
+      }
+    }
+
+
+  }
   private void rm() {
     String arg = parser.getArgs()[0];
     Path path = Paths.get(arg);
@@ -216,6 +344,16 @@ public class Terminal {
         case "rm":
           rm();
           break;
+        case "ls":
+          ls();
+          break ;
+        case "cp":
+          try {
+            cp();
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+          break ;
         case "exit":
           exit = true;
           break;
@@ -226,5 +364,8 @@ public class Terminal {
       }
     }
   }
-  public static void main(String[] args){}
+  public static void main(String[] args){
+    Terminal terminal = new Terminal();
+    terminal.chooseCommandAction();
+  }
 }

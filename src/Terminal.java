@@ -68,7 +68,7 @@ public class Terminal {
   
   }
   private void ls() {
-    File currentDirectory = new File(".") ;
+    File currentDirectory = new File(pwd()) ;
     File[] files = currentDirectory.listFiles() ;
     if(parser.getFlags().length != 0){
       for(int i= files.length-1 ;i>=0;i--)
@@ -170,32 +170,28 @@ public class Terminal {
         System.out.println("error: source and destination are the same");
         return;
     }
-    File currentDirectory = new File(".") ;
+    File currentDirectory = new File(pwd()) ;
     File[] files = currentDirectory.listFiles() ;
-    Path source = null;
-    Path destination = null;
+    Path source = Paths.get(arguments[0]);
+    Path destination = Paths.get(arguments[1]);
 
     boolean isDirectory1 = false ;
     boolean isDirectory2 = false    ;
     boolean found1 = false ;
     boolean found2 = false ;
-    for(int i=0;i<files.length;i++){
-      if(files[i].getName().equals(arguments[0])){
-        if(files[i].isDirectory())
-          isDirectory1 = true ;
-        found1 = true ;
-        source = files[i].toPath() ;
-      }
-      if(files[i].getName().equals(arguments[1])) {
-        if(files[i].isDirectory())
-          isDirectory2 = true ;
-        found2 = true;
-        destination = files[i].toPath() ;
-      }
+    if(Files.exists(source)) {
+      found1 = true;
+      File file = new File(source.toString()) ;
+      if(file.isDirectory())
+        isDirectory1 = true ;
     }
-//    for(int i=0;i<files.length;i++){
-//      files[i] ;
-//    }
+    if(Files.exists(destination)) {
+      found2 = true;
+      File file = new File(destination.toString()) ;
+      if(file.isDirectory())
+        isDirectory2 = true ;
+    }
+    
     if(!found1){
       System.out.println("error: couldn't find the first file");
       return;
@@ -247,7 +243,7 @@ public class Terminal {
 //            copying the directories here
             Path finalDestination = destination;
             Path finalSource = source;
-            Files.walk(Paths.get(finalSource.toString()))
+            Files.walk(finalSource)
                     .forEach(mysource -> {
                       Path mydestination = Paths.get(finalDestination.toString(), mysource.toString()
                               .substring(finalSource.toString().length()));
